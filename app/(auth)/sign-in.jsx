@@ -10,12 +10,12 @@ import { Link } from 'expo-router'
 
 const SignIn = () => {
 
-  const [form, setForm] = React.useState({
+  const [form, setForm] = useState({
     email: '',
     password: ''
   })
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const submit = () => {
 
@@ -24,7 +24,7 @@ const SignIn = () => {
   return (
     <SafeAreaView className="bg-primary h-full justify-center">
       <ScrollView>
-        <View className="justify-center w-full min-h-[85vh] px-5 my-6">
+        <View className="justify-center w-full min-h-[83vh] px-5 my-6">
           <Image 
             source={images.logo}
             resizeMode='contain'
