@@ -3,6 +3,7 @@ import { Slot, Stack } from 'expo-router';
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import { SplashScreen,Link } from "expo-router";
+import  GlobalProvider  from "../context/GlobalProvider";
 
 SplashScreen.preventAutoHideAsync(); //this will prevent splash screen from auto hiding before asset loading is completed
 
@@ -31,11 +32,12 @@ const RootLayout = () => {
   if (!fontsLoaded && !error) return null;
 
   return (
-    // <>
+    <GlobalProvider>
+    {/* // <>
     // <Text>Header</Text>
     // <Slot/>
     // <Text>Footer</Text>
-    // </>
+    // </> */}
 
     
 
@@ -45,6 +47,7 @@ const RootLayout = () => {
       <Stack.Screen name="(tabs)" options={{headerShown: false}} />
       {/* <Stack.Screen name="/search/[query]" options={{headerShown: false}} /> */}
     </Stack>
+    </GlobalProvider>
   )
 }
 

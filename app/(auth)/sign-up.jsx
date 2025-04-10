@@ -9,7 +9,11 @@ import '../../global.css';
 import { Link, router } from 'expo-router'
 import { createUser } from '../../lib/appwrite'
 
+import { useGlobalContext } from "../../context/GlobalProvider";
+
 const SignUp = () => {
+
+  const { setUser, setIsLogged } = useGlobalContext();
 
   const [form, setForm] = useState({
     username: '',
@@ -28,6 +32,8 @@ const SignUp = () => {
 
       try{
           const result = await createUser(form.email, form.password, form.username)
+          setUser(result);
+          setIsLogged(true) //set the user to the global state
 
           //set it to the global state
           router.replace('/home')
@@ -36,8 +42,8 @@ const SignUp = () => {
       }finally{
           setIsSubmitting(false)
       }
-      createUser()
-  }
+      // createUser()
+  };
 
   return (
     <SafeAreaView className="bg-primary h-full justify-center">
