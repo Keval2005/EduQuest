@@ -9,7 +9,7 @@ const CustomButton = ({ title, handlePress, containerStyles, textStyles, isLoadi
         className={`
             bg-secondary 
             rounded-xl 
-            min-h-[62px] 
+            min-h-[60px] 
             justify-center 
             items-center 
             ${containerStyles}
