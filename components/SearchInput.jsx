@@ -1,11 +1,15 @@
 import { Text, View, TextInput, TouchableOpacity, Image } from 'react-native'
 import React, { useState } from 'react'
 import '../global.css';
+import { Alert } from 'react-native';
+import { router } from 'expo-router';
 import { icons } from '../constants';
+import { usePathname } from 'expo-router';
 
-const SearchInput = ( {title, value, placeholder, handleChangeText, otherStyles, ...props }) => {
+const SearchInput = ( {initialQuery} ) => {
   
-    const [showPassowrd, setShowPassword] = useState(false)
+    const pathname = usePathname();
+    const [query, setQuery] = useState(initialQuery || '');
     const [isFocused, setIsFocused] = useState(false)
 
     return (
@@ -14,16 +18,25 @@ const SearchInput = ( {title, value, placeholder, handleChangeText, otherStyles,
       <View className={`border-2  w-full h-16 px-4  bg-black-200  rounded-2xl flex-row  items-center ${isFocused ? 'border-secondary' : 'border-black-200'}`}>
          <TextInput
             className='text-base mt-0.5 text-white flex-1 font-pregular'
-            value={value}
+            value={query}
             placeholder='Search for a video topic'
-            placeholderTextColor='#7B7B8B'
-            onChangeText={handleChangeText}
+            placeholderTextColor='#CDCDE0'
+            onChangeText={(e) => setQuery(e)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            secureTextEntry={ title === 'Password' && !showPassowrd }
         />
 
-        <TouchableOpacity>
+        <TouchableOpacity
+            onPress={() => {
+              if(!query) {
+                return Alert.alert('Missing Query','Please input something to search results across database')
+              }
+              if(pathname.startsWith('/search')) {
+                router.setParams({query})
+            }else router.push(`/search/${query}`)
+          }
+          }
+        >
             <Image
                 source={icons.search}
                 className='w-5 h-5'
