@@ -14,8 +14,8 @@ const VideoCard = ( {video: {title, thumbnail, video, creator:{ username, avatar
             <Image source={{ uri:avatar }} className="w-full h-full rounded-lg" resizeMode='cover'/>
           </View>
           <View className="justify-center gap-y-1 flex-1 ml-3">
-            <Text className="text-white font-psemibold text-sm" numberOfLines={1}>{title}</Text>
-            <Text className="text-gray-100 font-pregular text-xs" numberOfLines={1}>{username}</Text>
+            <Text className="text-white font-psemibold text-lg" numberOfLines={1}>{title}</Text>
+            <Text className="text-gray-100 font-pregular text-sm" numberOfLines={1}>{username}</Text>
           </View>
         </View>
 
