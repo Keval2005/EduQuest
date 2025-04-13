@@ -78,16 +78,20 @@ const SignUp = () => {
             handleChangeText={(e) => setForm({...form, password: e})}
             otherStyles='mt-7'
           />
-
-          <View className="mt-7 bg-black-200 rounded-2xl">
+            
+          <View className="mt-7">
+            <Text className="text-base text-gray-100 font-pmedium mb-1.5">Role</Text>
+            <View className="w-full h-16 bg-black-100 rounded-2xl border-2 border-black-200">
             <Picker
               selectedValue={form.role}
               onValueChange={(value) => setForm({...form, role: value})}
               style={{color: 'white'}}
+              dropdownIconColor="#808080"
             >
               <Picker.Item label="Student" value="student" />
               <Picker.Item label="Educator" value="educator" />
             </Picker>
+            </View>
           </View>
 
           <CustomButtom
