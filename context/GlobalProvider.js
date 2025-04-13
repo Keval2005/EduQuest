@@ -9,6 +9,7 @@ const GlobalProvider = ({ children }) => {
     const [isLogged, setIsLogged] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [currentlyPlayingVideo, setCurrentlyPlayingVideo] = useState(null);
     
     useEffect(() => {
         getCurrentUser()
@@ -37,7 +38,9 @@ const GlobalProvider = ({ children }) => {
                 setIsLogged,
                 user,
                 setUser,
-                loading
+                loading,
+                currentlyPlayingVideo,
+                setCurrentlyPlayingVideo
             }}
         >
             {children}
