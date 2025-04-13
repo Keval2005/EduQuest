@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { router } from "expo-router";
 import { ResizeMode, Video } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
@@ -28,6 +28,14 @@ const Create = () => {
     thumbnail: null,
     prompt: "",
   });
+
+  // Check if user has educator role
+  useEffect(() => {
+    if (user?.role !== 'educator') {
+      Alert.alert("Access Denied", "Only educators can create videos");
+      router.replace("/home");
+    }
+  }, [user]);
 
   const openPicker = async (selectType) => {
     

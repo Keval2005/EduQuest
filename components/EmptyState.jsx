@@ -3,8 +3,12 @@ import React from 'react'
 import images from '../constants/images'
 import CustomButton from './CustomButton'
 import { router } from 'expo-router'
+import { useGlobalContext } from '../context/GlobalProvider'
 
 const EmptyState = ({title, subtitle}) => {
+  const { user } = useGlobalContext();
+  const isEducator = user?.role === 'educator';
+
   return (
     <View className='justify-center items-center px-4'>
       <Image 
@@ -14,11 +18,13 @@ const EmptyState = ({title, subtitle}) => {
         <Text className="text-2xl text-center mt-2 font-psemibold text-white">{title}</Text>
         <Text className="font-pmedium text-sm text-gray-100">{subtitle}</Text>
 
-        <CustomButton
-            title="Create Video"
-            handlePress={() => router.push('/create')}
-            containerStyles='w-full mt-5'
-        />
+        {isEducator && (
+          <CustomButton
+              title="Create Video"
+              handlePress={() => router.push('/create')}
+              containerStyles='w-full mt-5'
+          />
+        )}
     </View>
   )
 }
