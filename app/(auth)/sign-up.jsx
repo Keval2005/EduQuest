@@ -8,6 +8,7 @@ import { useState } from 'react'
 import '../../global.css';
 import { Link, router } from 'expo-router'
 import { createUser } from '../../lib/appwrite'
+import {Picker} from '@react-native-picker/picker';
 
 import { useGlobalContext } from "../../context/GlobalProvider";
 
@@ -18,20 +19,21 @@ const SignUp = () => {
   const [form, setForm] = useState({
     username: '',
     email: '',
-    password: ''
+    password: '',
+    role: 'student' // Default value
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const submit = async () => {
-      if(!form.username || !form.email || !form.password){
+      if(!form.username || !form.email || !form.password || !form.role){
           Alert.alert('Error','All fields are required')
       }
 
       setIsSubmitting(true)
 
       try{
-          const result = await createUser(form.email, form.password, form.username)
+          const result = await createUser(form.email, form.password, form.username, form.role)
           setUser(result);
           setIsLogged(true) //set the user to the global state
 
@@ -76,6 +78,17 @@ const SignUp = () => {
             handleChangeText={(e) => setForm({...form, password: e})}
             otherStyles='mt-7'
           />
+
+          <View className="mt-7 bg-black-200 rounded-2xl">
+            <Picker
+              selectedValue={form.role}
+              onValueChange={(value) => setForm({...form, role: value})}
+              style={{color: 'white'}}
+            >
+              <Picker.Item label="Student" value="student" />
+              <Picker.Item label="Educator" value="educator" />
+            </Picker>
+          </View>
 
           <CustomButtom
             title='Sign Up'
