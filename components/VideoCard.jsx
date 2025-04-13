@@ -1,10 +1,13 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { icons } from '../constants'
+import { Video, ResizeMode } from 'expo-av';
 
 const VideoCard = ( {video: {title, thumbnail, video, creator:{ username, avatar }, $id }} ) => {
   const router = useRouter();
+
+  const [play, setPlay] = useState(false);
 
   return (
     <View className="flex-col items-center px-4 mb-14">
@@ -20,18 +23,41 @@ const VideoCard = ( {video: {title, thumbnail, video, creator:{ username, avatar
         </View>
 
         <View className="pt-2">
-          <Image source={icons.menu} className="w-5 h-5" resizeMode='contain' />
+          <TouchableOpacity onPress={() => router.push(`/video/${$id}`)}>
+            <Image source={icons.redirect} className="w-8 h-8" resizeMode='contain' />
+          </TouchableOpacity>
         </View>
       </View>
       
-      <TouchableOpacity 
-        className="w-full h-60 rounded-xl mt-3 relative justify-center items-center" 
-        activeOpacity={0.7}
-        onPress={() => router.push(`/video/${$id}`)}
-      >
-        <Image source={{ uri:thumbnail }} className="w-full h-full rounded-xl mt-3" resizeMode='cover'/>
-        <Image source={icons.play} className="w-12 h-12 absolute" resizeMode='contain' />
-      </TouchableOpacity> 
+      {play ? (
+        <Video
+          source={{ uri: video }}
+          className="w-full h-60 rounded-xl mt-3"
+          style={{
+            width: "100%", // w-52 = 52 * 4
+            height: 240, // h-72 = 60 * 4
+            borderRadius: 12,
+            marginTop: 12,
+          }}
+          resizeMode={ResizeMode.CONTAIN}
+          useNativeControls
+          shouldPlay
+          onPlaybackStatusUpdate={(status) => {
+            if (status.didJustFinish) {
+              setPlay(false);
+            }
+          }}
+        />
+      ) :(
+        <TouchableOpacity 
+          className="w-full h-60 rounded-xl mt-3 relative justify-center items-center" 
+          activeOpacity={0.7}
+          onPress={() => setPlay(true)}
+        >
+          <Image source={{ uri:thumbnail }} className="w-full h-full rounded-xl mt-3" resizeMode='cover'/>
+          <Image source={icons.play} className="w-12 h-12 absolute" resizeMode='contain' />
+        </TouchableOpacity> 
+      )}
     </View>
   )
 }
