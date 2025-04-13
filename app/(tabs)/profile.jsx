@@ -40,7 +40,7 @@ const Profile = () => {
             <View className='w-16 h-16 rounded-lg border border-secondary justify-center items-center'>
               <Image 
                 source={{uri: user?.avatar}} 
-                className='w-[90%] h-[90%] rounded-lg' 
+                className='w-[98%] h-[98%] rounded-lg' 
                 resizeMode='cover'/>
             </View>
             <InfoBox
