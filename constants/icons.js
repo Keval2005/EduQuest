@@ -13,6 +13,7 @@ import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import redirect from "../assets/icons/redirect.png";
 import edit from "../assets/icons/edit.png";
+import quiz from "../assets/icons/quiz.png";
 import deleteIcon from "../assets/icons/delete.png";
 import send from "../assets/icons/send.png";
 
@@ -32,6 +33,7 @@ export default {
   upload,
   rightArrow,
   logout,
+  quiz,
   eyeHide,
   eye,
 };
