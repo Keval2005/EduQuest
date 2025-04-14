@@ -147,7 +147,7 @@ const VideoPlayer = () => {
     const isCurrentUser = item.userId === user?.$id;
     
     return (
-      <View className="flex-row gap-3 p-3 bg-black-100 rounded-lg mb-2">
+      <View className="flex-row gap-3 p-4 bg-black-100 rounded-3xl mb-3">
         <TouchableOpacity onPress={() => handleCommenterProfilePress(item.user.$id)}>
           <Image 
             source={{ uri: item.user?.avatar }} 
@@ -157,17 +157,17 @@ const VideoPlayer = () => {
         <View className="flex-1">
           <View className="flex-row justify-between items-center">
             <TouchableOpacity onPress={() => handleCommenterProfilePress(item.user.$id)}>
-              <Text className="text-white font-pmedium text-sm">
+              <Text className="text-gray-400 font-pmedium text-sm">
                 {item.user?.username}
               </Text>
             </TouchableOpacity>
             {isCurrentUser && !isEditing && (
               <View className="flex-row gap-2">
                 <TouchableOpacity onPress={() => startEditing(item)}>
-                  <Text className="text-blue-400 text-xs">Edit</Text>
+                <Image source={icons.edit} className="w-7 h-7" resizeMode='contain' />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteComment(item.$id)}>
-                  <Text className="text-red-400 text-xs">Delete</Text>
+                <Image source={icons.deleteIcon} className="w-7 h-7" resizeMode='contain' />
                 </TouchableOpacity>
               </View>
             )}
@@ -175,40 +175,40 @@ const VideoPlayer = () => {
           
           {isEditing ? (
             <View className="mt-2">
-              <FormField
-                title=""
+              <TextInput
                 value={editText}
+                onChangeText={setEditText}
                 placeholder="Edit your comment..."
-                handleChangeText={setEditText}
-                otherStyles="mb-0"
+                placeholderTextColor="#666"
                 multiline
                 numberOfLines={2}
                 className="bg-black-200 text-white p-2 rounded-lg"
+                style={{ color: 'white' }}
               />
               <View className="flex-row justify-end gap-2 mt-2">
                 <TouchableOpacity onPress={cancelEditing}>
-                  <Text className="text-gray-400 text-xs">Cancel</Text>
+                  <Text className="text-gray-400 text-sm">Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleEditComment(item.$id)}>
-                  <Text className="text-blue-400 text-xs">Save</Text>
+                  <Text className="text-blue-400 text-sm">Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <Text className="text-gray-100 font-pregular text-sm">
+            <Text className="text-gray-100 font-pregular text-lg">
               {item.content}
             </Text>
           )}
           
-          <Text className="text-gray-400 font-pregular text-xs mt-1">
-            {new Date(item.$createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              }
-            )}
+          <Text className="text-gray-500 font-pregular text-xs mt-1">
+          {new Date(item.$createdAt).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          })}
           </Text>
         </View>
       </View>
@@ -292,9 +292,9 @@ const VideoPlayer = () => {
           onError={(error) => console.error('Video Error:', error)}
         />
       </View>
-
-      <View className="flex-1 px-4 pt-4">
-        <Text className="text-white font-psemibold text-lg mb-4">
+      <Text className="font-psemibold text-lg bg-gray-500 border border-gray-500 rounded-2xl mx-4 my-3 p-3">{prompt}</Text>
+      <View className="flex-1 px-4 pt-1">
+        <Text className="text-gray-400 font-psemibold text-lg mb-4">
           Discussion ({comments.length})
         </Text>
         
@@ -302,28 +302,28 @@ const VideoPlayer = () => {
           data={comments}
           renderItem={renderComment}
           keyExtractor={item => item.$id}
-          className="mb-4"
+          className="mb-0"
           inverted
         />
         
-        <View className="flex-row gap-2 pb-4">
+        <View className="flex-row gap-2 pb-3 justify-center items-end">
           <View className="flex-1">
             <FormField
               title=""
               value={newComment}
               placeholder="Add a comment..."
               handleChangeText={setNewComment}
-              otherStyles="mb-0"
+              otherStyles="rounded-full"
               multiline
               numberOfLines={2}
-              className="bg-black-100 rounded-lg px-4 py-2 text-white"
+              className="bg-black-100 rounded-full items-bottom text-white"
             />
           </View>
           <TouchableOpacity
             onPress={handleSubmitComment}
-            className="bg-secondary px-4 py-2 rounded-lg justify-center"
+            className=" rounded-lg h-16 justify-center"
           >
-            <Text className="text-white font-psemibold">Post</Text>
+            <Image source={icons.send} className="w-14 h-14" resizeMode='cover' />
           </TouchableOpacity>
         </View>
       </View>

@@ -12,11 +12,17 @@ import eyeHide from "../assets/icons/eye-hide.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import redirect from "../assets/icons/redirect.png";
+import edit from "../assets/icons/edit.png";
+import deleteIcon from "../assets/icons/delete.png";
+import send from "../assets/icons/send.png";
 
 export default {
   play,
   bookmark,
   home,
+  send,
+  edit,
+  deleteIcon,
   plus,
   profile,
   leftArrow,
