@@ -8,7 +8,7 @@ const CustomButton = ({ title, handlePress, containerStyles, textStyles, isLoadi
         activeOpacity={0.7}
         className={`
             bg-secondary 
-            rounded-full 
+            rounded-2xl 
             min-h-[60px] 
             justify-center 
             items-center 
