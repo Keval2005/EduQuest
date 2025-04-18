@@ -1,9 +1,9 @@
-import { View, Text, Image, TouchableOpacity, SafeAreaView, FlatList, TextInput, Alert } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, SafeAreaView, FlatList, TextInput, Alert, Modal, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
 import { ResizeMode, Video } from "expo-av";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { icons } from '../../constants';
-import { getPostById } from '../../lib/appwrite';
+import { getPostById, getQuizByVideoId, saveQuizResult } from '../../lib/appwrite';
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { getCommentsByPostId, createComment, editComment, deleteComment } from '../../lib/appwrite';
 import FormField from '../../components/FormField';
@@ -20,6 +20,19 @@ const VideoPlayer = () => {
   const [newComment, setNewComment] = useState('');
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
+
+  // Add these states
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [score, setScore] = useState(0);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
+  const [quizId, setQuizId] = useState(null);
+  const [answers, setAnswers] = useState({}); // Store all user answers
+  const [showSubmit, setShowSubmit] = useState(false); // Control submit button visibility
+  const videoRef = React.useRef(null);
 
   const handleUserProfilePress = () => {
     if (post?.creator?.$id) {
@@ -255,6 +268,213 @@ const VideoPlayer = () => {
     }
   };
 
+  // Function to fetch and prepare quiz questions
+  const handleStartQuiz = async () => {
+    setLoadingQuiz(true);
+    try {
+      if (videoRef.current) {
+        await videoRef.current.pauseAsync();
+      }
+
+      const quizData = await getQuizByVideoId(id);
+      const { quizId, questions } = quizData;
+      
+      setQuizId(quizId);
+      
+      const shuffled = questions.sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, Math.min(10, shuffled.length));
+      
+      setQuizQuestions(selected);
+      setAnswers({}); // Reset answers
+      setScore(0);
+      setQuizCompleted(false);
+      setShowQuiz(true);
+    } catch (error) {
+      console.error('Error fetching quiz:', error);
+      Alert.alert('Error', 'Failed to load quiz questions');
+    } finally {
+      setLoadingQuiz(false);
+    }
+  };
+
+  // Add this function to save results when quiz is completed
+  const handleQuizComplete = async () => {
+    try {
+      await saveQuizResult(id, quizId, score, quizQuestions.length);
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+      // Don't alert the user, as this is not critical to their experience
+    }
+    setQuizCompleted(true);
+  };
+
+  // New function to handle individual answer selection
+  const handleAnswerSelect = (questionIndex, answer) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionIndex]: answer
+    }));
+  };
+
+  // New function to check if all questions are answered
+  const areAllQuestionsAnswered = () => {
+    return quizQuestions.length === Object.keys(answers).length;
+  };
+
+  // New function to handle quiz submission
+  const handleSubmitQuiz = () => {
+    if (!areAllQuestionsAnswered()) {
+      Alert.alert('Warning', 'Please answer all questions before submitting');
+      return;
+    }
+
+    let totalScore = 0;
+    quizQuestions.forEach((question, index) => {
+      const userAnswer = answers[index];
+      const correctAnswer = JSON.parse(question.answer);
+      if (userAnswer === correctAnswer) {
+        totalScore += 1;
+      }
+    });
+
+    setScore(totalScore);
+    handleQuizComplete();
+  };
+
+  const QuizModal = () => {
+    const scrollViewRef = useRef(null);
+
+    if (loadingQuiz) {
+      return (
+        <Modal
+          transparent={true}
+          visible={showQuiz}
+          animationType="slide"
+        >
+          <View className="flex-1 justify-center items-center bg-black/90">
+            <ActivityIndicator size="large" color="#6366F1" />
+            <Text className="text-white mt-4">Loading quiz...</Text>
+          </View>
+        </Modal>
+      );
+    }
+
+    if (quizCompleted) {
+      return (
+        <Modal
+          transparent={true}
+          visible={showQuiz}
+          animationType="slide"
+        >
+          <View className="flex-1 justify-center items-center bg-black/90">
+            <View className="bg-black-100 p-6 rounded-3xl w-[90%]">
+              <Text className="text-white text-2xl font-psemibold text-center mb-4">
+                Quiz Completed!
+              </Text>
+              <Text className="text-white text-xl text-center mb-6">
+                Your Score: {score}/{quizQuestions.length}
+              </Text>
+              <TouchableOpacity 
+                className="bg-secondary py-3 rounded-2xl"
+                onPress={() => {
+                  setShowQuiz(false);
+                  setQuizCompleted(false);
+                }}
+              >
+                <Text className="text-white text-center font-pmedium">Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+
+    return (
+      <Modal
+        transparent={true}
+        visible={showQuiz}
+        animationType="slide"
+      >
+        <View className="flex-1 bg-black/90">
+          <View className="flex-row justify-between items-center px-4 py-4">
+            <TouchableOpacity 
+              onPress={() => {
+                setShowQuiz(false);
+                setAnswers({});
+                setCurrentQuestionIndex(0);
+              }}
+              className="p-2"
+            >
+              <Text className="text-gray-400 font-pmedium">Cancel</Text>
+            </TouchableOpacity>
+            <Text className="text-white text-xl font-psemibold">Quiz</Text>
+            <View style={{ width: 50 }}>
+              <Text> </Text>
+            </View>
+          </View>
+
+          <ScrollView 
+            ref={scrollViewRef}
+            className="flex-1 px-4"
+            maintainPosition={true}
+            maintainVisibleContentPosition={{
+              minIndexForVisible: 0,
+            }}
+          >
+            <View className="bg-black-100 p-6 rounded-3xl">              
+              {quizQuestions.map((question, index) => {
+                const isTrue = question.type === 'true-false';
+                let options = [];
+                try {
+                  options = JSON.parse(question.options);
+                } catch (error) {
+                  console.error('Error parsing options:', error);
+                  options = [];
+                }
+
+                return (
+                  <View key={`question-${index}`} className="mb-8">
+                    <Text className="text-white text-lg mb-4">
+                      {index + 1}. {question.question}
+                    </Text>
+
+                    <View className="space-y-3">
+                      {(isTrue ? ['True', 'False'] : options).map((option, optionIndex) => (
+                        <TouchableOpacity
+                          key={`question-${index}-option-${optionIndex}`}
+                          className={`p-4 my-1.5 rounded-2xl ${
+                            answers[index] === option
+                              ? 'bg-secondary'
+                              : 'bg-black-200'
+                          }`}
+                          onPress={() => handleAnswerSelect(index, option)}
+                        >
+                          <Text className="text-white text-center">{option}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                );
+              })}
+
+              <TouchableOpacity
+                className={`py-4 rounded-2xl mt-6 ${
+                  areAllQuestionsAnswered() ? 'bg-secondary' : 'bg-gray-600'
+                }`}
+                onPress={handleSubmitQuiz}
+                disabled={!areAllQuestionsAnswered()}
+              >
+                <Text className="text-white text-center font-pmedium">
+                  Submit Quiz
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-primary">
         <View className="gap-3 p-4 items-center flex-row">
@@ -269,19 +489,16 @@ const VideoPlayer = () => {
                     <Text className="text-gray-100 font-pregular text-sm" numberOfLines={1}>{creator.username}</Text>
                 </TouchableOpacity>
             </View>
-            <View className="pt-2">
-                <Image source={icons.menu} className="w-5 h-5" resizeMode='contain' />
-            </View>
+            <TouchableOpacity onPress={handleStartQuiz}>
+                <Image source={icons.quiz} className="w-10 h-10" resizeMode='contain' />
+            </TouchableOpacity>
         </View>
         
 
       <View className="justify-top">
         <Video
+          ref={videoRef}
           source={{ uri: video }}
-        //   style={{
-        //     width: "100%",
-        //     height: "50%",
-        //   }}
           style={{
             aspectRatio: aspectRatio,
           }}
@@ -327,6 +544,7 @@ const VideoPlayer = () => {
           </TouchableOpacity>
         </View>
       </View>
+      <QuizModal />
     </SafeAreaView>
   );
 };

@@ -11,10 +11,16 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 
 import { icons } from "../../constants";
-import { createVideoPost } from "../../lib/appwrite";
+import { 
+  createVideoPost, 
+  createQuizCollection, 
+  createQuizQuestion 
+} from "../../lib/appwrite";
 import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
 import { useGlobalContext } from "../../context/GlobalProvider";
@@ -28,6 +34,7 @@ const Create = () => {
     thumbnail: null,
     prompt: "",
   });
+  const [uploadProgress, setUploadProgress] = useState('');
 
   // Check if user has educator role
   useEffect(() => {
@@ -66,26 +73,97 @@ const Create = () => {
     }
   };
 
+  // Add loading overlay component
+  const LoadingOverlay = () => (
+    <Modal
+      transparent={true}
+      animationType="fade"
+      visible={uploading}
+    >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="bg-primary p-6 rounded-2xl items-center">
+          <ActivityIndicator size="large" color="#6366F1" />
+          <Text className="text-white font-pmedium mt-4 text-center">
+            {uploadProgress || 'Processing your video...'}
+          </Text>
+        </View>
+      </View>
+    </Modal>
+  );
+
   const submit = async () => {
-    if (
-      (form.prompt === "") |
-      (form.title === "") |
-      !form.thumbnail |
-      !form.video
-    ) {
+    if ((form.prompt === "") | (form.title === "") | !form.thumbnail | !form.video) {
       return Alert.alert("Please provide all fields");
     }
 
     setUploading(true);
     try {
-      await createVideoPost({
+      setUploadProgress('Creating video post...');
+      
+      // Create FormData for video upload
+      const formData = new FormData();
+      formData.append('video', {
+        uri: form.video.uri,
+        name: 'video.mp4',
+        type: 'video/mp4'
+      });
+
+      setUploadProgress('Generating transcript and quiz questions...');
+      // Send video to Flask server for transcript and quiz generation
+      const flaskResponse = await fetch('http://192.168.138.35:5000/generate-transcript', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const transcriptData = await flaskResponse.json();
+      if (!flaskResponse.ok) {
+        throw new Error(
+          transcriptData.details || transcriptData.error || 'Transcript generation failed'
+        );
+      }
+
+      setUploadProgress('Uploading video and thumbnail...');
+      // First create the video post
+      const newPost = await createVideoPost({
         ...form,
         userId: user.$id,
       });
 
-      Alert.alert("Success", "Post uploaded successfully");
+      setUploadProgress('Creating quiz collection...');
+      // Create quiz collection associated with the video
+      const quizCollection = await createQuizCollection(newPost.$id);
+
+      setUploadProgress('Generating quiz questions...');
+      // Create quiz questions
+      const questions = transcriptData.quiz_questions;
+      const questionPromises = questions.map(questionData => 
+        createQuizQuestion(
+          quizCollection.$id,
+          {
+            type: questionData.type,
+            question: questionData.question,
+            options: questionData.options,
+            answer: questionData.answer,
+            correct_statement: questionData.correct_statement
+          },
+          questionData.order
+        )
+      );
+
+      // Wait for all questions to be created
+      await Promise.all(questionPromises);
+
+      Alert.alert(
+        "Success", 
+        "Post uploaded successfully with quiz questions"
+      );
       router.push("/home");
+
     } catch (error) {
+      console.error("Error in submit:", error);
       Alert.alert("Error", error.message);
     } finally {
       setForm({
@@ -94,8 +172,8 @@ const Create = () => {
         thumbnail: null,
         prompt: "",
       });
-
       setUploading(false);
+      setUploadProgress('');
     }
   };
 
@@ -190,6 +268,7 @@ const Create = () => {
           isLoading={uploading}
         />
       </ScrollView>
+      <LoadingOverlay />
     </SafeAreaView>
   );
 };

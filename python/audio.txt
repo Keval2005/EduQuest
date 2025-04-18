@@ -1,0 +1,40 @@
+PHP, a dynamic, interpreted scripting language for building interactive websites on the server.
+Despite the haters pronouncing it dead, it remains one of the most popular languages
+for back-end web development.
+It powers content management systems like WordPress, top-tier websites like Wikipedia,
+and countless others via frameworks like Laravel and Symphony.
+Hell, man, even Facebook uses it, although they built a custom compiler to convert it to
+machine code on their servers.
+It was created in 1994 by Rasmus Lierdorf to manage his personal home page,
+clever acronym, but it sounds lame for a language that powers multi-billion dollar enterprises.
+So today we practice cognitive dissonance to tell ourselves PHP stands for Hypertext
+Pre-Processor.
+It has a special place in history because it predates JavaScript and was one of the first
+languages to be embedded directly in HTML, allowing websites to be built dynamically on
+a server.
+It's open source and was one of the technologies that revolutionized the web by making application
+development accessible to the average person.
+Its interpreter is implemented in C and has a syntax inspired by Perl.
+To get started, create a PHP file and add some basic HTML to it.
+Within this file, you can go into PHP mode by opening a question mark PHP tag.
+The code within these tags will be rendered on the server.
+Use echo to output a value in the location of the tag.
+To declare a variable, give it a name that starts with a dollar sign followed by a value.
+It's a weekly typed language, so no type annotations are necessary.
+It also comes with a large number of predefined variables geared towards web development,
+like Git, Post, and Cookie, which contain information about the incoming HTTP request.
+Now when this code is rendered on your server, it will output an HTML string with the PHP
+tags being replaced by whatever you echoed.
+The language also supports multiple programming paradigms.
+You have first class functions, which can be assigned to variables, or used anonymously
+as arguments, and it has tons and tons of built-in functions to do pretty much anything
+a web developer could ever imagine doing.
+It also has a complete object model where you can define classes with inheritance to implement
+object-oriented patterns.
+We're currently on PHP version 8, which has all the features you would expect from a
+modern, pragmatic language.
+Every web developer should be familiar with it, because statistically, there's a 78.5%
+chance that your client's website is running the personal homepage language.
+This has been PHP in 100 seconds.
+Hit the like button if you want to see more short videos like this.
+Thanks for watching, and I will see you in the next one.
