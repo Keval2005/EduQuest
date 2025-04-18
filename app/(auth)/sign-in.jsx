@@ -50,11 +50,11 @@ const SignIn = () => {
       <ScrollView>
         <View className="justify-center w-full min-h-[83vh] px-5 my-6">
           <Image 
-            source={images.logo}
+            source={images.logoSmall}
             resizeMode='contain'
-            className="w-[115px] h-[35px]"
+            className="w-14 h-14"
           />
-          <Text className='text-2xl text-white text-semibold mt-10 font-psemibold'>Log in to Aora</Text>
+          <Text className='text-2xl text-white text-semibold mt-10 font-psemibold'>Log in to EDUQuest</Text>
 
           <FormField
             title='Email'

@@ -30,7 +30,7 @@ export default function App() {
       <ScrollView contentContainerStyle={{height: '100%'}}>
         <View className="w-full min-h-[85vh] justify-center items-center px-4">
           <Image
-            source={images.logo}
+            source={images.logoSmall}
             className="w-[140px] h-[84px]"
             resizeMode="contain"
             />
@@ -44,14 +44,14 @@ export default function App() {
           
           <Text className="text-3xl text-white font-bold text-center">
             Discover Endless {'\n'} Possibilities with {''}
-            <Text className="text-secondary-200">Aora</Text>
+            <Text className="text-secondary-200">EDUQuest</Text>
           </Text>
 
           <Image source={images.path} className=" w-[136px] h-[15px] absolute -bottom-3 -right-11" resizeMode="contain" />
           </View>
 
           <Text className="text-sm text-gray-100 text-center mt-7 font-pregular">
-            Where Creativity meets Innovation: embark on a journey of endless possibilities with Aora
+            Where Creativity meets Innovation: embark on a journey of endless possibilities with EDUQuest
           </Text>
 
           <CustomButton 
