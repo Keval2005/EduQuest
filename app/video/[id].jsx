@@ -322,7 +322,7 @@ const VideoPlayer = () => {
   };
 
   // New function to handle quiz submission
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     if (!areAllQuestionsAnswered()) {
       Alert.alert('Warning', 'Please answer all questions before submitting');
       return;
@@ -337,8 +337,17 @@ const VideoPlayer = () => {
       }
     });
 
+    // First set the score
     setScore(totalScore);
-    handleQuizComplete();
+    
+    // Then save the quiz result with the actual score
+    try {
+      await saveQuizResult(id, quizId, totalScore, quizQuestions.length);
+      setQuizCompleted(true);
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+      Alert.alert('Error', 'Failed to save quiz results');
+    }
   };
 
   const QuizModal = () => {
