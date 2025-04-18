@@ -10,6 +10,7 @@ import { getAllPosts, getLatestPosts } from '../../lib/appwrite'
 import VideoCard from '../../components/VideoCard'
 import useAppwrite from '../../lib/useAppwrite'
 import { useGlobalContext } from '../../context/GlobalProvider'
+import { useFocusEffect } from '@react-navigation/native'
 
 const Home = () => {
 
@@ -24,6 +25,13 @@ const Home = () => {
     await refetch();
     setRefreshing(false);
   };
+
+  // Add useFocusEffect to refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [])
+  );
 
   return (
     <SafeAreaView className="bg-primary h-full border-red border-2">

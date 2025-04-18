@@ -615,7 +615,7 @@ const VideoPlayer = () => {
           )}
           <TouchableOpacity onPress={handleBookmark}>
             <Image 
-              source={isBookmarked ? icons.bookmarkFilled : icons.bookmark} 
+              source={isBookmarked ? icons.bookmarkFilled : icons.notBookMarked} 
               className="w-10 h-10" 
               resizeMode='contain' 
             />

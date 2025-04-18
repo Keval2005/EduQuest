@@ -1,6 +1,6 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { icons } from '../constants'
 import { Video, ResizeMode } from 'expo-av';
 import { useGlobalContext } from '../context/GlobalProvider';
@@ -18,14 +18,17 @@ const VideoCard = ({ video, onBookmarkChange }) => {
 
   const { title, thumbnail, video: videoUrl, creator, $id } = video;
 
-  useEffect(() => {
-    const checkBookmarkStatus = async () => {
-      const { isBookmarked, bookmarkId } = await isPostBookmarked(video.$id);
-      setIsBookmarked(isBookmarked);
-      setBookmarkId(bookmarkId);
-    };
-    checkBookmarkStatus();
-  }, [video.$id]);
+  // Refresh bookmark status whenever video prop changes or screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkBookmarkStatus = async () => {
+        const { isBookmarked, bookmarkId } = await isPostBookmarked($id);
+        setIsBookmarked(isBookmarked);
+        setBookmarkId(bookmarkId);
+      };
+      checkBookmarkStatus();
+    }, [$id])
+  );
 
   // Check if this video is the currently playing one
   useEffect(() => {
@@ -81,7 +84,7 @@ const VideoCard = ({ video, onBookmarkChange }) => {
         setIsBookmarked(false);
         setBookmarkId(null);
       } else {
-        const bookmark = await addBookmark(video.$id);
+        const bookmark = await addBookmark($id);
         setIsBookmarked(true);
         setBookmarkId(bookmark.$id);
       }
@@ -118,7 +121,7 @@ const VideoCard = ({ video, onBookmarkChange }) => {
         <View className="pt-2 flex-row gap-2">
           <TouchableOpacity onPress={handleBookmark}>
             <Image 
-              source={isBookmarked ? icons.bookmarkFilled : icons.bookmark} 
+              source={isBookmarked ? icons.bookmarkFilled : icons.notBookMarked} 
               className="w-8 h-8" 
               resizeMode='contain' 
             />

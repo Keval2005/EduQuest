@@ -10,6 +10,7 @@ import rightArrow from "../assets/icons/right-arrow.png";
 import logout from "../assets/icons/logout.png";
 import bookmarkFilled from "../assets/icons/bookmarkFilled.png";
 import eyeHide from "../assets/icons/eye-hide.png";
+import notBookMarked from "../assets/icons/notbookmark.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import redirect from "../assets/icons/redirect.png";
@@ -35,6 +36,7 @@ export default {
   upload,
   rightArrow,
   logout,
+  notBookMarked,
   quiz,
   eyeHide,
   eye,
