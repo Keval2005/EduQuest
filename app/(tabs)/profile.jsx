@@ -1,9 +1,9 @@
 import { FlatList, Text, View, TouchableOpacity, Image, Alert } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
 import EmptyState from '../../components/EmptyState'
-import { getUserPosts, getUserQuizStats, getUserQuizAttempts, signOut } from '../../lib/appwrite'
+import { getUserPosts, getUserQuizStats, getUserQuizAttempts, signOut, getPostById } from '../../lib/appwrite'
 import { router } from 'expo-router'
 import VideoCard from '../../components/VideoCard'
 import { useGlobalContext } from '../../context/GlobalProvider'
@@ -12,6 +12,22 @@ import InfoBox from '../../components/InfoBox'
 import useAppwrite from '../../lib/useAppwrite'
 
 const QuizAttemptCard = ({ attempt }) => {
+  const [videoTitle, setVideoTitle] = useState("Loading...");
+
+  useEffect(() => {
+    const fetchVideoTitle = async () => {
+      try {
+        const videoData = await getPostById(attempt.videoId);
+        setVideoTitle(videoData.title);
+      } catch (error) {
+        console.error('Error fetching video title:', error);
+        setVideoTitle("Untitled Video");
+      }
+    };
+
+    fetchVideoTitle();
+  }, [attempt.videoId]);
+
   return (
     <View className="bg-black-100 rounded-2xl p-4 mx-4 mb-4">
       <View className="flex-row justify-between items-center mb-2">
@@ -22,8 +38,8 @@ const QuizAttemptCard = ({ attempt }) => {
           {new Date(attempt.timestamp).toLocaleDateString()}
         </Text>
       </View>
-      <Text className="text-gray-300">
-        Score: {((attempt.score / attempt.totalQuestions) * 100).toFixed(1)}%
+      <Text className="text-gray-400 mt-1" numberOfLines={1}>
+        {videoTitle}
       </Text>
       <TouchableOpacity 
         className="mt-2"
