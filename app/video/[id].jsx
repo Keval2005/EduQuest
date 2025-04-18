@@ -1,5 +1,5 @@
 import { View, Text, Image, TouchableOpacity, SafeAreaView, FlatList, TextInput, Alert, Modal, ActivityIndicator, ScrollView } from 'react-native';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo, createContext, useReducer, useContext } from 'react';
 import { ResizeMode, Video } from "expo-av";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { icons } from '../../constants';
@@ -7,6 +7,24 @@ import { getPostById, getQuizByVideoId, saveQuizResult } from '../../lib/appwrit
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { getCommentsByPostId, createComment, editComment, deleteComment } from '../../lib/appwrite';
 import FormField from '../../components/FormField';
+
+// Create a context for quiz answers at the top of the file
+const QuizContext = React.createContext();
+
+// Create a reducer for managing answers
+const answersReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_ANSWER':
+      return {
+        ...state,
+        [action.questionIndex]: action.answer
+      };
+    case 'RESET':
+      return {};
+    default:
+      return state;
+  }
+};
 
 const VideoPlayer = () => {
   const { id } = useLocalSearchParams();
@@ -34,8 +52,12 @@ const VideoPlayer = () => {
   const [showSubmit, setShowSubmit] = useState(false); // Control submit button visibility
   const videoRef = React.useRef(null);
 
-  const handleUserProfilePress = () => {
+  const handleUserProfilePress = async () => {
     if (post?.creator?.$id) {
+      // Pause video if it exists
+      if (videoRef.current) {
+        await videoRef.current.pauseAsync();
+      }
       router.push(`/profile/${post.creator.$id}`);
     }
   };
@@ -270,6 +292,15 @@ const VideoPlayer = () => {
 
   // Function to fetch and prepare quiz questions
   const handleStartQuiz = async () => {
+    // Check if user is educator
+    if (user?.role === 'educator') {
+      Alert.alert(
+        "Access Restricted",
+        "Quiz feature is only available for students"
+      );
+      return;
+    }
+
     setLoadingQuiz(true);
     try {
       if (videoRef.current) {
@@ -350,8 +381,64 @@ const VideoPlayer = () => {
     }
   };
 
-  const QuizModal = () => {
+  // Create a memoized option component
+  const QuizOption = React.memo(({ option, isSelected, onSelect }) => (
+    <TouchableOpacity
+      className={`p-4 rounded-2xl my-1.5 ${
+        isSelected ? 'bg-secondary' : 'bg-black-200'
+      }`}
+      onPress={onSelect}
+    >
+      <Text className="text-white text-center">{option}</Text>
+    </TouchableOpacity>
+  ));
+
+  const QuizQuestion = ({ question, index }) => {
+    const { answers, handleAnswerSelect } = useContext(QuizContext);
+    const selectedAnswer = answers[index];
+    const isTrue = question.type === 'true-false';
+    
+    let options = [];
+    try {
+      options = JSON.parse(question.options);
+    } catch (error) {
+      console.error('Error parsing options:', error);
+      options = [];
+    }
+
+    return (
+      <View className="mb-8">
+        <Text className="text-white text-lg mb-4">
+          {index + 1}. {question.question}
+        </Text>
+
+        <View className="space-y-4">
+          {(isTrue ? ['True', 'False'] : options).map((option, optionIndex) => (
+            <QuizOption
+              key={`option-${optionIndex}`}
+              option={option}
+              isSelected={selectedAnswer === option}
+              onSelect={() => handleAnswerSelect(index, option)}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const MemoizedQuizQuestion = React.memo(QuizQuestion);
+
+  const QuizModal = React.memo(() => {
     const scrollViewRef = useRef(null);
+    const [answersState, dispatch] = useReducer(answersReducer, {});
+
+    const handleAnswerSelect = useCallback((questionIndex, answer) => {
+      dispatch({ type: 'SET_ANSWER', questionIndex, answer });
+    }, []);
+
+    const areAllQuestionsAnswered = useCallback(() => {
+      return quizQuestions.length === Object.keys(answersState).length;
+    }, [quizQuestions.length, answersState]);
 
     if (loadingQuiz) {
       return (
@@ -398,141 +485,152 @@ const VideoPlayer = () => {
       );
     }
 
+    const handleSubmitQuizLocal = async () => {
+      if (!areAllQuestionsAnswered()) {
+        Alert.alert('Warning', 'Please answer all questions before submitting');
+        return;
+      }
+
+      let totalScore = 0;
+      quizQuestions.forEach((question, index) => {
+        const userAnswer = answersState[index];
+        const correctAnswer = JSON.parse(question.answer);
+        if (userAnswer === correctAnswer) {
+          totalScore += 1;
+        }
+      });
+
+      setScore(totalScore);
+      
+      try {
+        await saveQuizResult(id, quizId, totalScore, quizQuestions.length);
+        setQuizCompleted(true);
+      } catch (error) {
+        console.error('Error saving quiz result:', error);
+        Alert.alert('Error', 'Failed to save quiz results');
+      }
+    };
+
     return (
       <Modal
-        transparent={true}
+        transparent={false}
         visible={showQuiz}
         animationType="slide"
       >
-        <View className="flex-1 bg-black/90">
-          <View className="flex-row justify-between items-center px-4 py-4">
-            <TouchableOpacity 
-              onPress={() => {
-                setShowQuiz(false);
-                setAnswers({});
-                setCurrentQuestionIndex(0);
-              }}
-              className="p-2"
-            >
-              <Text className="text-gray-400 font-pmedium">Cancel</Text>
-            </TouchableOpacity>
-            <Text className="text-white text-xl font-psemibold">Quiz</Text>
-            <View style={{ width: 50 }}>
-              <Text> </Text>
-            </View>
-          </View>
-
-          <ScrollView 
-            ref={scrollViewRef}
-            className="flex-1 px-4"
-            maintainPosition={true}
-            maintainVisibleContentPosition={{
-              minIndexForVisible: 0,
-            }}
-          >
-            <View className="bg-black-100 p-6 rounded-3xl">              
-              {quizQuestions.map((question, index) => {
-                const isTrue = question.type === 'true-false';
-                let options = [];
-                try {
-                  options = JSON.parse(question.options);
-                } catch (error) {
-                  console.error('Error parsing options:', error);
-                  options = [];
-                }
-
-                return (
-                  <View key={`question-${index}`} className="mb-8">
-                    <Text className="text-white text-lg mb-4">
-                      {index + 1}. {question.question}
-                    </Text>
-
-                    <View className="space-y-3">
-                      {(isTrue ? ['True', 'False'] : options).map((option, optionIndex) => (
-                        <TouchableOpacity
-                          key={`question-${index}-option-${optionIndex}`}
-                          className={`p-4 my-1.5 rounded-2xl ${
-                            answers[index] === option
-                              ? 'bg-secondary'
-                              : 'bg-black-200'
-                          }`}
-                          onPress={() => handleAnswerSelect(index, option)}
-                        >
-                          <Text className="text-white text-center">{option}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                );
-              })}
-
-              <TouchableOpacity
-                className={`py-4 rounded-2xl mt-6 ${
-                  areAllQuestionsAnswered() ? 'bg-secondary' : 'bg-gray-600'
-                }`}
-                onPress={handleSubmitQuiz}
-                disabled={!areAllQuestionsAnswered()}
+        <QuizContext.Provider value={{ answers: answersState, handleAnswerSelect }}>
+          <View className="flex-1 bg-black/90">
+            <View className="flex-row justify-between items-center px-4 py-4">
+              <TouchableOpacity 
+                onPress={() => {
+                  setShowQuiz(false);
+                  dispatch({ type: 'RESET' });
+                }}
+                className="p-2"
               >
-                <Text className="text-white text-center font-pmedium">
-                  Submit Quiz
-                </Text>
+                <Text className="text-gray-400 font-pmedium">Cancel</Text>
               </TouchableOpacity>
+              <Text className="text-white text-xl font-psemibold">Quiz</Text>
+              <View style={{ width: 50 }}>
+                <Text> </Text>
+              </View>
             </View>
-          </ScrollView>
-        </View>
+
+            <ScrollView 
+              ref={scrollViewRef}
+              className="flex-1 px-4"
+              maintainPosition={true}
+              maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+              }}
+            >
+              <View className="bg-black-100 p-6 rounded-3xl">              
+                {quizQuestions.map((question, index) => (
+                  <MemoizedQuizQuestion
+                    key={`question-${index}`}
+                    question={question}
+                    index={index}
+                  />
+                ))}
+
+                <TouchableOpacity
+                  className={`py-4 rounded-2xl mt-6 ${
+                    areAllQuestionsAnswered() ? 'bg-secondary' : 'bg-gray-600'
+                  }`}
+                  onPress={handleSubmitQuizLocal}
+                  disabled={!areAllQuestionsAnswered()}
+                >
+                  <Text className="text-white text-center font-pmedium">
+                    Submit Quiz
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </QuizContext.Provider>
       </Modal>
     );
-  };
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-primary">
+      <ScrollView className="">
         <View className="gap-3 p-4 items-center flex-row">
-            <TouchableOpacity onPress={handleUserProfilePress}>
-                <View className="w-[46px] h-[46px] rounded-lg border border-secondary justify-center items-center">
-                    <Image source={{ uri: creator.avatar }} className="w-full h-full rounded-lg" resizeMode='cover'/>
-                </View>
-            </TouchableOpacity>
-            <View className="justify-center gap-y-1 flex-1 ml-3">
-                <Text className="text-white font-psemibold text-xl" numberOfLines={1}>{title}</Text>
-                <TouchableOpacity onPress={handleUserProfilePress}>
-                    <Text className="text-gray-100 font-pregular text-sm" numberOfLines={1}>{creator.username}</Text>
-                </TouchableOpacity>
+          <TouchableOpacity onPress={handleUserProfilePress}>
+            <View className="w-[46px] h-[46px] rounded-lg border border-secondary justify-center items-center">
+              <Image source={{ uri: creator.avatar }} className="w-full h-full rounded-lg" resizeMode='cover'/>
             </View>
-            <TouchableOpacity onPress={handleStartQuiz}>
-                <Image source={icons.quiz} className="w-10 h-10" resizeMode='contain' />
+          </TouchableOpacity>
+          <View className="justify-center gap-y-1 flex-1 ml-3">
+            <Text className="text-white font-psemibold text-xl" numberOfLines={1}>{title}</Text>
+            <TouchableOpacity onPress={handleUserProfilePress}>
+              <Text className="text-gray-100 font-pregular text-sm" numberOfLines={1}>{creator.username}</Text>
             </TouchableOpacity>
+          </View>
+          {user?.role !== 'educator' && (
+            <TouchableOpacity onPress={handleStartQuiz}>
+              <Image source={icons.quiz} className="w-10 h-10" resizeMode='contain' />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View>
+          <Video
+            ref={videoRef}
+            source={{ uri: video }}
+            style={{
+              aspectRatio: aspectRatio,
+            }}
+            resizeMode={ResizeMode.CONTAIN}
+            useNativeControls
+            shouldPlay
+            onReadyForDisplay={handleVideoLoad}
+            onError={(error) => console.error('Video Error:', error)}
+          />
         </View>
         
-
-      <View className="justify-top">
-        <Video
-          ref={videoRef}
-          source={{ uri: video }}
-          style={{
-            aspectRatio: aspectRatio,
-          }}
-          resizeMode={ResizeMode.CONTAIN}
-          useNativeControls
-          shouldPlay
-          onReadyForDisplay={handleVideoLoad}
-          onError={(error) => console.error('Video Error:', error)}
-        />
-      </View>
-      <Text className="font-psemibold text-lg bg-gray-500 border border-gray-500 rounded-2xl mx-4 my-3 p-3">{prompt}</Text>
-      <View className="flex-1 px-4 pt-1">
-        <Text className="text-gray-400 font-psemibold text-lg mb-4">
-          Discussion ({comments.length})
+        <Text className="font-psemibold text-lg bg-gray-500 border border-gray-500 rounded-2xl mx-4 my-3 p-3">
+          {prompt}
         </Text>
-        
-        <FlatList
-          data={comments}
-          renderItem={renderComment}
-          keyExtractor={item => item.$id}
-          className="mb-0"
-          inverted
-        />
-        
-        <View className="flex-row gap-2 pb-3 justify-center items-end">
+
+        <View className="px-4 pt-1">
+          <Text className="text-gray-400 font-psemibold text-lg mb-4">
+            Discussion ({comments.length})
+          </Text>
+          
+          {/* Replace FlatList with manual mapping of comments */}
+          <View style={{marginBottom:95}}>
+            {comments.map((item) => (
+              <View key={item.$id}>
+                {renderComment({ item })}
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Fixed comment input at bottom */}
+      <View className="absolute bottom-0 left-0 right-0 bg-primary px-4 pb-3 border-t border-gray-800">
+        <View className="flex-row gap-2 items-end">
           <View className="flex-1">
             <FormField
               title=""
@@ -547,15 +645,16 @@ const VideoPlayer = () => {
           </View>
           <TouchableOpacity
             onPress={handleSubmitComment}
-            className=" rounded-lg h-16 justify-center"
+            className="rounded-lg h-16 justify-center"
           >
             <Image source={icons.send} className="w-14 h-14" resizeMode='cover' />
           </TouchableOpacity>
         </View>
       </View>
+      
       <QuizModal />
     </SafeAreaView>
   );
 };
 
-export default VideoPlayer; 
+export default VideoPlayer;

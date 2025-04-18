@@ -1,73 +1,56 @@
 import { FlatList, Text, View, TouchableOpacity, Image } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import EmptyState from '../../components/EmptyState'
-import { getUserPosts, getUserById } from '../../lib/appwrite'  
+import { getUserPosts, getUserQuizStats, getUserQuizAttempts, getUserById } from '../../lib/appwrite'  
 import { router, useLocalSearchParams } from 'expo-router'
 import VideoCard from '../../components/VideoCard'
-import { signOut } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
-import { useGlobalContext } from '../../context/GlobalProvider'
 import { icons } from '../../constants'
 import InfoBox from '../../components/InfoBox'
 
+const QuizAttemptCard = ({ attempt }) => {
+  return (
+    <View className="bg-black-100 rounded-2xl p-4 mx-4 mb-4">
+      <View className="flex-row justify-between items-center mb-2">
+        <Text className="text-white font-psemibold text-lg">
+          Quiz Score: {attempt.score}/{attempt.totalQuestions}
+        </Text>
+        <Text className="text-gray-400">
+          {new Date(attempt.timestamp).toLocaleDateString()}
+        </Text>
+      </View>
+      <Text className="text-gray-300">
+        Score: {((attempt.score / attempt.totalQuestions) * 100).toFixed(1)}%
+      </Text>
+      <TouchableOpacity 
+        className="mt-2"
+        onPress={() => router.push(`/video/${attempt.videoId}`)}
+      >
+        <Text className="text-secondary">View Video →</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const UserProfile = () => {
   const { id } = useLocalSearchParams();
-  const { user, setUser, setIsLogged } = useGlobalContext();
-  const [profileUser, setProfileUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const { data: profileUser } = useAppwrite(() => getUserById(id));
   const { data: posts } = useAppwrite(() => getUserPosts(id));
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const userData = await getUserById(id);
-        setProfileUser(userData);
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [id]);
-
-  const logout = async () => {
-    await signOut();
-    setIsLogged(false);
-    setUser(null);
-    router.replace('/sign-in');
-  }
-
-  if (loading) {
-    return (
-      <SafeAreaView className="bg-primary h-full">
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-white">Loading profile...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!profileUser) {
-    return (
-      <SafeAreaView className="bg-primary h-full">
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-white">User not found</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const { data: quizStats } = useAppwrite(() => getUserQuizStats(id));
+  const { data: quizAttempts } = useAppwrite(() => getUserQuizAttempts(id));
 
   return (
     <SafeAreaView className="bg-primary h-full">
       <FlatList
-        data={posts}
+        data={profileUser?.role === 'educator' ? posts : quizAttempts}
         keyExtractor={(item) => item.$id}
         renderItem={({ item }) => (
-          <VideoCard video={item} />
+          profileUser?.role === 'educator' ? (
+            <VideoCard video={item} />
+          ) : (
+            <QuizAttemptCard attempt={item} />
+          )
         )}
         ListHeaderComponent={() => (
           <View className='w-full justify-center items-center mt-6 mb-12 px-4'>
@@ -86,30 +69,36 @@ const UserProfile = () => {
               titleStyles="text-lg"
             />
 
-            <View className="mt-5 flex-row justify-between items-center">
-              <InfoBox
-                title={posts?.length || 0}
-                subtitle="Posts"
-                containerStyles="mr-10"
-                titleStyles="text-xl"
-              />
-              <InfoBox
-                title="1.2k"
-                subtitle="Followers"
-                titleStyles="text-xl"
-              />
+            <View className="mt-5 flex-row justify-center items-center">
+              {profileUser?.role === 'educator' ? (
+                <InfoBox
+                  title={posts?.length || 0}
+                  subtitle="Posts"
+                  titleStyles="text-xl"
+                />
+              ) : (
+                <InfoBox
+                  title={quizStats?.averageScore || '0'}
+                  subtitle={`Quiz Score (${quizStats?.totalAttempts || 0} attempts)`}
+                  titleStyles="text-xl"
+                />
+              )}
             </View>
           </View>
         )}
         ListEmptyComponent={() => (
           <EmptyState
-            title="No videos found"
-            subtitle="No videos found for this user"  
+            title={profileUser?.role === 'educator' ? "No videos found" : "No quiz attempts yet"}
+            subtitle={
+              profileUser?.role === 'educator' 
+                ? "No videos uploaded yet"
+                : "This student hasn't attempted any quizzes yet"
+            }
           />
         )}
       />
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default UserProfile; 
+export default UserProfile;

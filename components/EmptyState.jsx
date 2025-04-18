@@ -16,7 +16,7 @@ const EmptyState = ({title, subtitle}) => {
       className="w-[270px] h-[215px]"
       resizeMode='contain'/>
         <Text className="text-2xl text-center mt-2 font-psemibold text-white">{title}</Text>
-        <Text className="font-pmedium text-sm text-gray-100">{subtitle}</Text>
+        <Text className="font-pmedium text-center text-sm text-gray-100">{subtitle}</Text>
 
         {isEducator && (
           <CustomButton
