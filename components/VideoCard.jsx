@@ -4,16 +4,28 @@ import { useRouter } from 'expo-router'
 import { icons } from '../constants'
 import { Video, ResizeMode } from 'expo-av';
 import { useGlobalContext } from '../context/GlobalProvider';
+import { addBookmark, removeBookmark, isPostBookmarked } from '../lib/appwrite';
 
-const VideoCard = ({ video }) => {
+const VideoCard = ({ video, onBookmarkChange }) => {
   const router = useRouter();
   const { currentlyPlayingVideo, setCurrentlyPlayingVideo, user } = useGlobalContext();
   const [play, setPlay] = useState(false);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isVideoCompleted, setIsVideoCompleted] = useState(false);
   const videoRef = useRef(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState(null);
 
   const { title, thumbnail, video: videoUrl, creator, $id } = video;
+
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      const { isBookmarked, bookmarkId } = await isPostBookmarked(video.$id);
+      setIsBookmarked(isBookmarked);
+      setBookmarkId(bookmarkId);
+    };
+    checkBookmarkStatus();
+  }, [video.$id]);
 
   // Check if this video is the currently playing one
   useEffect(() => {
@@ -62,6 +74,26 @@ const VideoCard = ({ video }) => {
     }
   };
 
+  const handleBookmark = async () => {
+    try {
+      if (isBookmarked) {
+        await removeBookmark(bookmarkId);
+        setIsBookmarked(false);
+        setBookmarkId(null);
+      } else {
+        const bookmark = await addBookmark(video.$id);
+        setIsBookmarked(true);
+        setBookmarkId(bookmark.$id);
+      }
+      // Notify parent component about bookmark change
+      if (onBookmarkChange) {
+        onBookmarkChange();
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
   return (
     <TouchableOpacity 
       className="flex-col items-center mb-12 border border-secondary rounded-xl mx-4 px-4 pt-4 pb-14"
@@ -83,7 +115,14 @@ const VideoCard = ({ video }) => {
           </View>
         </View>
 
-        <View className="pt-2">
+        <View className="pt-2 flex-row gap-2">
+          <TouchableOpacity onPress={handleBookmark}>
+            <Image 
+              source={isBookmarked ? icons.bookmarkFilled : icons.bookmark} 
+              className="w-8 h-8" 
+              resizeMode='contain' 
+            />
+          </TouchableOpacity>
           <TouchableOpacity onPress={handleCardPress}>
             <Image source={icons.redirect} className="w-8 h-8" resizeMode='contain' />
           </TouchableOpacity>

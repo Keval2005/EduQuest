@@ -17,13 +17,13 @@ const Home = () => {
   const { data: latestPosts } = useAppwrite(getLatestPosts);
   const { user, setUser, setIsLogged } = useGlobalContext();
 
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch(); //re call videos -> if any new videos appeared
+    await refetch();
     setRefreshing(false);
-  }
+  };
 
   return (
     <SafeAreaView className="bg-primary h-full border-red border-2">
@@ -31,7 +31,10 @@ const Home = () => {
         data={posts}
         keyExtractor={(item) => item.$id}
         renderItem={({ item }) => (
-          <VideoCard video={item} />
+          <VideoCard 
+            video={item} 
+            onBookmarkChange={refetch}
+          />
         )}
         ListHeaderComponent={() => (
           <View className="my-6 px-4 space-y-6">
@@ -62,10 +65,15 @@ const Home = () => {
             subtitle="Be the first one to upload a video"  
           />
         )}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+          />
+        }
       />
     </SafeAreaView>
-  )
-}
+  );
+};
 
 export default Home

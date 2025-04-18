@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, memo, createContext, u
 import { ResizeMode, Video } from "expo-av";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { icons } from '../../constants';
-import { getPostById, getQuizByVideoId, saveQuizResult } from '../../lib/appwrite';
+import { getPostById, getQuizByVideoId, saveQuizResult, addBookmark, removeBookmark, isPostBookmarked } from '../../lib/appwrite';
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { getCommentsByPostId, createComment, editComment, deleteComment } from '../../lib/appwrite';
 import FormField from '../../components/FormField';
@@ -27,19 +27,23 @@ const answersReducer = (state, action) => {
 };
 
 const VideoPlayer = () => {
+  // 1. First, declare all useState hooks
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useGlobalContext();
+  const videoRef = useRef(null);
+  
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [aspectRatio, setAspectRatio] = useState(16/9); 
-
-  const { user } = useGlobalContext();
+  const [aspectRatio, setAspectRatio] = useState(16/9);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
-
-  // Add these states
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState(null);
+  
+  // Quiz-related states
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -48,9 +52,55 @@ const VideoPlayer = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [quizId, setQuizId] = useState(null);
-  const [answers, setAnswers] = useState({}); // Store all user answers
-  const [showSubmit, setShowSubmit] = useState(false); // Control submit button visibility
-  const videoRef = React.useRef(null);
+  const [answers, setAnswers] = useState({});
+  const [showSubmit, setShowSubmit] = useState(false);
+
+  // 2. Then, declare all useEffects
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        // First fetch post data
+        const postData = await getPostById(id);
+        setPost(postData);
+
+        if (postData) {
+          // Only check bookmark status if we have post data
+          const { isBookmarked, bookmarkId } = await isPostBookmarked(postData.$id);
+          setIsBookmarked(isBookmarked);
+          setBookmarkId(bookmarkId);
+
+          // Load comments
+          const postComments = await getCommentsByPostId(postData.$id);
+          setComments(postComments);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [id]);
+
+  // 3. Then, declare all your handlers
+  const handleBookmark = async () => {
+    if (!post) return;
+    
+    try {
+      if (isBookmarked) {
+        await removeBookmark(bookmarkId);
+        setIsBookmarked(false);
+        setBookmarkId(null);
+      } else {
+        const bookmark = await addBookmark(post.$id);
+        setIsBookmarked(true);
+        setBookmarkId(bookmark.$id);
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
 
   const handleUserProfilePress = async () => {
     if (post?.creator?.$id) {
@@ -71,20 +121,6 @@ const VideoPlayer = () => {
       router.push(`/profile/${userId}`);
     }
   };
-
-  // Add this useEffect for loading comments
-  useEffect(() => {
-    const loadComments = async () => {
-      try {
-        const postComments = await getCommentsByPostId(id);
-        setComments(postComments);
-      } catch (error) {
-        console.error('Error loading comments:', error);
-      }
-    };
-    
-    if (post) loadComments();
-  }, [id, post]);
 
   // Add comment submission handler
   const handleSubmitComment = async () => {
@@ -248,46 +284,6 @@ const VideoPlayer = () => {
         </View>
       </View>
     );
-  };
-
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const postData = await getPostById(id);
-        setPost(postData);
-      } catch (error) {
-        console.error('Error fetching post:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPost();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <View className="flex-1 bg-primary justify-center items-center">
-        <Text className="text-white">Loading...</Text>
-      </View>
-    );
-  }
-
-  if (!post) {
-    return (
-      <View className="flex-1 bg-primary justify-center items-center">
-        <Text className="text-white">Video not found</Text>
-      </View>
-    );
-  }
-
-  const { title, video, creator, prompt } = post;
-
-  const handleVideoLoad = (status) => {
-    if (status?.naturalSize?.width && status?.naturalSize?.height) {
-      const ratio = status.naturalSize.width / status.naturalSize.height;
-      setAspectRatio(isNaN(ratio) ? 16/9 : ratio);
-    }
   };
 
   // Function to fetch and prepare quiz questions
@@ -571,6 +567,32 @@ const VideoPlayer = () => {
     );
   });
 
+  // 4. Finally, return your JSX
+  if (loading) {
+    return (
+      <View className="flex-1 bg-primary justify-center items-center">
+        <Text className="text-white">Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!post) {
+    return (
+      <View className="flex-1 bg-primary justify-center items-center">
+        <Text className="text-white">Video not found</Text>
+      </View>
+    );
+  }
+
+  const { title, video, creator, prompt } = post;
+
+  const handleVideoLoad = (status) => {
+    if (status?.naturalSize?.width && status?.naturalSize?.height) {
+      const ratio = status.naturalSize.width / status.naturalSize.height;
+      setAspectRatio(isNaN(ratio) ? 16/9 : ratio);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-primary">
       <ScrollView className="">
@@ -591,6 +613,13 @@ const VideoPlayer = () => {
               <Image source={icons.quiz} className="w-10 h-10" resizeMode='contain' />
             </TouchableOpacity>
           )}
+          <TouchableOpacity onPress={handleBookmark}>
+            <Image 
+              source={isBookmarked ? icons.bookmarkFilled : icons.bookmark} 
+              className="w-10 h-10" 
+              resizeMode='contain' 
+            />
+          </TouchableOpacity>
         </View>
 
         <View>
