@@ -2,7 +2,7 @@ import { FlatList, Text, View, TouchableOpacity, Image } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import EmptyState from '../../components/EmptyState'
-import { getUserPosts } from '../../lib/appwrite'  
+import { getUserPosts, getUserQuizStats } from '../../lib/appwrite'  
 import { router } from 'expo-router'
 import VideoCard from '../../components/VideoCard'
 import { signOut } from '../../lib/appwrite'
@@ -13,14 +13,13 @@ import InfoBox from '../../components/InfoBox'
 const Profile = () => {
 
   const { user, setUser, setIsLogged } = useGlobalContext();
-
   const { data: posts } = useAppwrite(() => getUserPosts(user.$id));
+  const { data: quizStats } = useAppwrite(() => getUserQuizStats(user.$id));
 
   const logout = async () => {
     await signOut();
     setIsLogged(false);
     setUser(null);
-
     router.replace('/sign-in');
   }
 
@@ -57,8 +56,8 @@ const Profile = () => {
                 titleStyles="text-xl"
               />
               <InfoBox
-                title="1.2k"
-                subtitle="Followers"
+                title={quizStats?.averageScore || '0'}
+                subtitle={`Quiz Score (${quizStats?.totalAttempts || 0} attempts)`}
                 titleStyles="text-xl"
               />
             </View>
