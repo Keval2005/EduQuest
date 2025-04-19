@@ -54,6 +54,7 @@ const VideoPlayer = () => {
   const [quizId, setQuizId] = useState(null);
   const [answers, setAnswers] = useState({});
   const [showSubmit, setShowSubmit] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
 
   // 2. Then, declare all useEffects
   useEffect(() => {
@@ -567,6 +568,37 @@ const VideoPlayer = () => {
     );
   });
 
+  const TranscriptModal = memo(() => {
+    return (
+      <Modal
+        transparent={false}
+        visible={showTranscript}
+        animationType="slide"
+      >
+        <View className="flex-1 bg-black/90">
+          <View className="flex-row justify-between items-center px-4 py-4">
+            <TouchableOpacity 
+              onPress={() => setShowTranscript(false)}
+              className="p-2"
+            >
+              <Text className="text-gray-400 font-pmedium">Close</Text>
+            </TouchableOpacity>
+            <Text className="text-white text-xl font-psemibold">Transcript</Text>
+            <View style={{ width: 50 }} />
+          </View>
+
+          <ScrollView className="flex-1 px-4">
+            <View className="bg-black-100 p-6 rounded-3xl">
+              <Text className="text-white text-lg leading-7">
+                {post?.transcript || 'No transcript available'}
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+    );
+  });
+
   // 4. Finally, return your JSX
   if (loading) {
     return (
@@ -637,9 +669,21 @@ const VideoPlayer = () => {
           />
         </View>
         
-        <Text className="font-psemibold text-lg bg-gray-500 border border-gray-500 rounded-2xl mx-4 my-3 p-3">
-          {prompt}
-        </Text>
+        <View className="flex-row items-center">
+          <Text className="flex-1 font-psemibold text-lg bg-gray-500 border border-gray-500 rounded-2xl mx-4 my-3 p-3">
+            {prompt}
+          </Text>
+          <TouchableOpacity 
+            onPress={() => setShowTranscript(true)}
+            className="mr-4"
+          >
+            <Image 
+              source={icons.transcript}
+              className="w-10 h-10" 
+              resizeMode='contain' 
+            />
+          </TouchableOpacity>
+        </View>
 
         <View className="px-4 pt-1">
           <Text className="text-gray-400 font-psemibold text-lg mb-4">
@@ -682,6 +726,7 @@ const VideoPlayer = () => {
       </View>
       
       <QuizModal />
+      <TranscriptModal />
     </SafeAreaView>
   );
 };

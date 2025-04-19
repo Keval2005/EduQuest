@@ -109,6 +109,7 @@ const Create = () => {
       });
 
       setUploadProgress('Generating transcript and quiz questions...');
+      console.log('Sending video to Flask server for processing...');
       // Send video to Flask server for transcript and quiz generation
       const flaskResponse = await fetch('http://192.168.138.35:5000/generate-transcript', {
         method: 'POST',
@@ -125,11 +126,16 @@ const Create = () => {
         );
       }
 
+      console.log('Transcript generated successfully');
+      console.log(`Transcript length: ${transcriptData.transcript.length} characters`);
+      console.log(`Number of quiz questions: ${transcriptData.quiz_questions.length}`);
+
       setUploadProgress('Uploading video and thumbnail...');
       // First create the video post
       const newPost = await createVideoPost({
         ...form,
         userId: user.$id,
+        transcript: transcriptData.transcript,
       });
 
       setUploadProgress('Creating quiz collection...');
@@ -156,6 +162,7 @@ const Create = () => {
       // Wait for all questions to be created
       await Promise.all(questionPromises);
 
+      console.log('Video post created successfully with transcript and quiz questions');
       Alert.alert(
         "Success", 
         "Post uploaded successfully with quiz questions"

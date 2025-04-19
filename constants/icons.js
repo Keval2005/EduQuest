@@ -18,6 +18,7 @@ import edit from "../assets/icons/edit.png";
 import quiz from "../assets/icons/quiz.png";
 import deleteIcon from "../assets/icons/delete.png";
 import send from "../assets/icons/send.png";
+import transcript from '../assets/icons/transcript.png';
 
 export default {
   play,
@@ -40,4 +41,5 @@ export default {
   quiz,
   eyeHide,
   eye,
+  transcript,
 };

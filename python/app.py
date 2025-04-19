@@ -186,6 +186,7 @@ def generate_transcript():
                 stream = ffmpeg.input(video_path)
                 stream = ffmpeg.output(stream, audio_path, acodec='pcm_s16le', ac=1, ar='16k')
                 ffmpeg.run(stream, capture_stdout=True, capture_stderr=True)
+                logger.info("Audio conversion completed successfully")
             except ffmpeg.Error as e:
                 logger.error(f"FFmpeg error: {str(e)}")
                 return jsonify({
@@ -195,6 +196,7 @@ def generate_transcript():
 
             # Run Whisper on the audio file
             try:
+                logger.info("Starting Whisper transcription...")
                 result = subprocess.run(
                     ['whisper', audio_path, '--model', 'base', '--output_format', 'txt'],
                     capture_output=True,
@@ -212,13 +214,20 @@ def generate_transcript():
                 else:
                     transcript = result.stdout.strip()
 
+                # Process and clean transcript
+                logger.info("Processing transcript...")
                 # Remove timestamps using regex
-                # This will match and remove patterns like [00:00.000 --> 00:00.000] or [00:00]
                 transcript = re.sub(r'\[\d+:\d+(?:\.\d+)?(?: --> \d+:\d+(?:\.\d+)?)?\]', '', transcript)
                 # Remove any extra whitespace created by timestamp removal
                 transcript = re.sub(r'\s+', ' ', transcript).strip()
+                
+                # Format transcript for better readability
+                sentences = sent_tokenize(transcript)
+                formatted_transcript = '\n\n'.join(sentences)
+                
+                logger.info(f"Transcript processed. Length: {len(formatted_transcript)} characters")
 
-                if not transcript:
+                if not formatted_transcript:
                     return jsonify({
                         'error': 'No transcript generated',
                         'details': result.stderr
@@ -230,12 +239,13 @@ def generate_transcript():
                 
                 # Log the response
                 logger.info("\n=== API Response ===")
-                logger.info(f"Transcript length: {len(transcript)} characters")
+                logger.info(f"Transcript length: {len(formatted_transcript)} characters")
+                logger.info(f"Number of sentences: {len(sentences)}")
                 logger.info(f"Number of questions: {len(questions)}")
                 logger.info("==================\n")
                 
                 return jsonify({
-                    'transcript': transcript,
+                    'transcript': formatted_transcript,
                     'quiz_questions': questions,
                     'quiz_id': quiz_id,
                     'status': 'success'
