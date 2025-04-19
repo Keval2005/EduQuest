@@ -1,48 +1,43 @@
-import { Text, View, ScrollView, Image, Alert } from 'react-native'
-import React from 'react'
+import { Text, View, ScrollView, Image, Alert, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import images from '../../constants/images'
 import FormField from '../../components/FormField'
 import CustomButtom from '../../components/CustomButton'
-import { useState } from 'react'
-import '../../global.css';
 import { Link } from 'expo-router'
 import { getCurrentUser, signIn } from '../../lib/appwrite'
-
-import { useGlobalContext } from "../../context/GlobalProvider";
+import { useGlobalContext } from "../../context/GlobalProvider"
 
 const SignIn = () => {
-
   const [form, setForm] = useState({
     email: '',
     password: ''
   })
 
   const { setUser, setIsLogged } = useGlobalContext();
-
   const [isSubmitting, setSubmitting] = useState(false)
 
   const submit = async () => {
-        if(form.email === "" || form.password === ""){
-            Alert.alert('Error','All fields are required')
-        }
-        setSubmitting(true)
+    if(form.email === "" || form.password === ""){
+      Alert.alert('Error','All fields are required')
+    }
+    setSubmitting(true)
   
-        try{
-            await signIn(form.email, form.password)
-            const result = await getCurrentUser();
-            setUser(result);
-            setIsLogged(true);
-            
-            Alert.alert("Success", "User signed in successfully");
-            router.replace("/home");
-            
-        }catch(error){
-            Alert.alert('Error', error.message)
-        }finally{
-            setSubmitting(false)
-        }
+    try{
+      await signIn(form.email, form.password)
+      const result = await getCurrentUser();
+      setUser(result);
+      setIsLogged(true);
+      
+      Alert.alert("Success", "User signed in successfully");
+      router.replace("/home");
+      
+    }catch(error){
+      Alert.alert('Error', error.message)
+    }finally{
+      setSubmitting(false)
+    }
   };
 
   return (
@@ -68,6 +63,7 @@ const SignIn = () => {
             value={form.password}
             handleChangeText={(e) => setForm({...form, password: e})}
             otherStyles='mt-7'
+            isPassword={true}
           />
 
           <CustomButtom
@@ -75,7 +71,6 @@ const SignIn = () => {
             handlePress={submit}
             containerStyles="mt-7"
             isLoading={isSubmitting}
-
           />
 
           <View className="flex-row justify-center pt-5 gap-2">
@@ -84,7 +79,6 @@ const SignIn = () => {
             </Text>
             <Link href="/sign-up" className='font-psemibold text-lg text-secondary'>Sign Up</Link>
           </View>
-
         </View>
       </ScrollView>
     </SafeAreaView>

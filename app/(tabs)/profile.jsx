@@ -1,8 +1,19 @@
-import { FlatList, Text, View, TouchableOpacity, Image, Alert } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { 
+  FlatList, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Image, 
+  Alert, 
+  Modal, 
+  TextInput,
+  ScrollView 
+} from 'react-native'
+import React, { useState, useEffect, useCallback, memo } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
 import EmptyState from '../../components/EmptyState'
+import FormField from '../../components/FormField'
 import { getUserPosts, getUserQuizStats, getUserQuizAttempts, signOut, getPostById } from '../../lib/appwrite'
 import { router } from 'expo-router'
 import VideoCard from '../../components/VideoCard'
@@ -10,6 +21,7 @@ import { useGlobalContext } from '../../context/GlobalProvider'
 import { icons } from '../../constants'
 import InfoBox from '../../components/InfoBox'
 import useAppwrite from '../../lib/useAppwrite'
+import PasswordChangeModal from '../../components/PasswordResetModal'
 
 const QuizAttemptCard = ({ attempt }) => {
   const [videoTitle, setVideoTitle] = useState("Loading...");
@@ -53,11 +65,11 @@ const QuizAttemptCard = ({ attempt }) => {
 
 const Profile = () => {
   const { user, setUser, setIsLogged } = useGlobalContext();
+  const [isPasswordModalVisible, setPasswordModalVisible] = useState(false);
   const { data: posts, refetch: refetchPosts } = useAppwrite(() => getUserPosts(user.$id));
   const { data: quizStats, refetch: refetchQuizStats } = useAppwrite(() => getUserQuizStats(user.$id));
   const { data: quizAttempts, refetch: refetchQuizAttempts } = useAppwrite(() => getUserQuizAttempts(user.$id));
 
-  // Add this effect to refresh data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       const refreshData = async () => {
@@ -101,6 +113,10 @@ const Profile = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <PasswordChangeModal 
+        visible={isPasswordModalVisible}
+        onClose={() => setPasswordModalVisible(false)}
+      />
       <FlatList
         data={user?.role === 'educator' ? posts : quizAttempts}
         keyExtractor={(item) => item.$id}
@@ -113,9 +129,14 @@ const Profile = () => {
         )}
         ListHeaderComponent={() => (
           <View className='w-full justify-center items-center mt-6 mb-12 px-4'>
-            <TouchableOpacity className="w-full items-end mb-10" onPress={logout}>
-              <Image source={icons.logout} resizeMode='contain' className='w-6 h-6'/>
-            </TouchableOpacity>
+            <View className="w-full flex-row justify-end items-center mb-10 gap-4">
+              <TouchableOpacity onPress={() => setPasswordModalVisible(true)}>
+                <Image source={icons.password} resizeMode='contain' className='w-9 h-9'/>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={logout}>
+                <Image source={icons.logout} resizeMode='contain' className='w-8 h-8'/>
+              </TouchableOpacity>
+            </View>
             <View className='w-16 h-16 rounded-lg border border-secondary justify-center items-center'>
               <Image 
                 source={{uri: user?.avatar}} 

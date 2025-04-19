@@ -13,38 +13,37 @@ import {Picker} from '@react-native-picker/picker';
 import { useGlobalContext } from "../../context/GlobalProvider";
 
 const SignUp = () => {
-
   const { setUser, setIsLogged } = useGlobalContext();
 
   const [form, setForm] = useState({
     username: '',
     email: '',
     password: '',
-    role: 'student' // Default value
+    role: 'student'
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const submit = async () => {
-      if(!form.username || !form.email || !form.password || !form.role){
-          Alert.alert('Error','All fields are required')
-      }
+    if(!form.username || !form.email || !form.password || !form.role){
+      Alert.alert('Error','All fields are required')
+    }
 
-      setIsSubmitting(true)
+    setIsSubmitting(true)
 
-      try{
-          const result = await createUser(form.email, form.password, form.username, form.role)
-          setUser(result);
-          setIsLogged(true) //set the user to the global state
+    try{
+      const result = await createUser(form.email, form.password, form.username, form.role)
+      setUser(result);
+      setIsLogged(true) //set the user to the global state
 
-          //set it to the global state
-          router.replace('/home')
-      }catch(error){
-          Alert.alert('Error', error.message)
-      }finally{
-          setIsSubmitting(false)
-      }
-      // createUser()
+      //set it to the global state
+      router.replace('/home')
+    }catch(error){
+      Alert.alert('Error', error.message)
+    }finally{
+      setIsSubmitting(false)
+    }
+    // createUser()
   };
 
   return (
@@ -77,20 +76,21 @@ const SignUp = () => {
             value={form.password}
             handleChangeText={(e) => setForm({...form, password: e})}
             otherStyles='mt-7'
+            isPassword={true}
           />
             
           <View className="mt-7">
             <Text className="text-base text-gray-100 font-pmedium mb-1.5">Role</Text>
             <View className="w-full h-16 bg-black-100 rounded-2xl border-2 border-black-200">
-            <Picker
-              selectedValue={form.role}
-              onValueChange={(value) => setForm({...form, role: value})}
-              style={{color: 'white'}}
-              dropdownIconColor="#808080"
-            >
-              <Picker.Item label="Student" value="student" />
-              <Picker.Item label="Educator" value="educator" />
-            </Picker>
+              <Picker
+                selectedValue={form.role}
+                onValueChange={(value) => setForm({...form, role: value})}
+                style={{color: 'white'}}
+                dropdownIconColor="#808080"
+              >
+                <Picker.Item label="Student" value="student" />
+                <Picker.Item label="Educator" value="educator" />
+              </Picker>
             </View>
           </View>
 
@@ -99,7 +99,6 @@ const SignUp = () => {
             handlePress={submit}
             containerStyles="mt-7"
             isLoading={isSubmitting}
-
           />
 
           <View className="flex-row justify-center pt-5 gap-2">
@@ -108,7 +107,6 @@ const SignUp = () => {
             </Text>
             <Link href="/sign-in" className='font-psemibold text-lg text-secondary'>Sign In</Link>
           </View>
-
         </View>
       </ScrollView>
     </SafeAreaView>
