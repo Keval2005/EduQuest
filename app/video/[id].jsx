@@ -7,6 +7,7 @@ import { getPostById, getQuizByVideoId, saveQuizResult, addBookmark, removeBookm
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { getCommentsByPostId, createComment, editComment, deleteComment } from '../../lib/appwrite';
 import FormField from '../../components/FormField';
+import { Stack } from 'expo-router';
 
 // Create a context for quiz answers at the top of the file
 const QuizContext = React.createContext();
@@ -626,6 +627,15 @@ const VideoPlayer = () => {
   };
 
   return (
+
+    <>
+      <Stack.Screen 
+        options={{
+          title: "Videos",
+          headerShown: true
+        }} 
+      />
+
     <SafeAreaView className="flex-1 bg-primary">
       <ScrollView className="">
         <View className="gap-3 p-4 items-center flex-row">
@@ -728,6 +738,7 @@ const VideoPlayer = () => {
       <QuizModal />
       <TranscriptModal />
     </SafeAreaView>
+    </>
   );
 };
 

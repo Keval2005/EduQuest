@@ -8,6 +8,7 @@ import VideoCard from '../../components/VideoCard'
 import useAppwrite from '../../lib/useAppwrite'
 import { icons } from '../../constants'
 import InfoBox from '../../components/InfoBox'
+import { Stack } from 'expo-router';
 
 const QuizAttemptCard = ({ attempt }) => {
   const [videoTitle, setVideoTitle] = useState("Loading...");
@@ -57,6 +58,15 @@ const UserProfile = () => {
   const { data: quizAttempts } = useAppwrite(() => getUserQuizAttempts(id));
 
   return (
+
+    <>
+          <Stack.Screen 
+            options={{
+              title: "Profile",
+              headerShown: true
+            }} 
+          />
+
     <SafeAreaView className="bg-primary h-full">
       <FlatList
         data={profileUser?.role === 'educator' ? posts : quizAttempts}
@@ -114,6 +124,7 @@ const UserProfile = () => {
         )}
       />
     </SafeAreaView>
+    </>
   );
 };
 

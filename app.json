@@ -34,11 +34,20 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-video", 
+      "expo-video",
       "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "0261ae03-bb36-4f80-a892-867cfcb1c3b3"
+      }
+    },
+    "owner": "kevalvadoliya05"
   }
 }
