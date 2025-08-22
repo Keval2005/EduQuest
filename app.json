@@ -1,20 +1,21 @@
 {
   "expo": {
-    "name": "Demo",
-    "slug": "Demo",
+    "name": "EduQuest",
+    "slug": "eduquest",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "demo",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "package": "com.example.demo",
+      "package": "com.example.eduquest",
+      "versionCode": 5,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/images/foreground.png",
         "backgroundColor": "#ffffff"
       }
     },
@@ -28,14 +29,21 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-video",
-      "expo-build-properties"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableJetifier": true,
+            "enableAndroidX": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -45,9 +53,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "0261ae03-bb36-4f80-a892-867cfcb1c3b3"
+        "projectId": "68fe0c45-810a-4000-9a52-681206f8c5f7"
       }
     },
-    "owner": "kevalvadoliya05"
+    "owner": "kevalvadoliya80"
   }
 }
