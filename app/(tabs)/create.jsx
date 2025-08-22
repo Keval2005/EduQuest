@@ -111,7 +111,7 @@ const Create = () => {
       setUploadProgress('Generating transcript and quiz questions...');
       console.log('Sending video to Flask server for processing...');
       // Send video to Flask server for transcript and quiz generation
-      const flaskResponse = await fetch('http://192.168.138.35:5000/generate-transcript', {
+      const flaskResponse = await fetch('http://192.168.168.36:5000/generate-transcript', {
         method: 'POST',
         body: formData,
         headers: {

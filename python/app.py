@@ -275,4 +275,4 @@ def generate_transcript():
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
-    app.run(host='192.168.138.35', port=5000, debug=True)  # <-- Add debug=True
+    app.run(host='192.168.168.36', port=5000, debug=True)  # <-- Add debug=True
